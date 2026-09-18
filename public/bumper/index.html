@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="id">
+<!-- Made with the Bang Motion skill by Bang Tutorial (https://youtube.com/bangtutorial) - MIT - https://github.com/bangtutorial/bang-motion -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DigiSkillBadge — Bumper 10 dtk</title>
+<!--
+  STYLE BRIEF
+  Tema + 3 kata sifat : portofolio digital anak SMK — bangga, cekatan, muda
+  Konsep              : kandidat 1 tiga keping hidup (12) / 2 satu lencana dicap (7) / 3 feed menumpuk (11) -> dipilih 2
+  Sidik jari struktur : metafora benda (7) · 6 adegan · kartu jurnal / cap / bekas tinta / lencana terbang /
+                        logo terkunci / keping menyapu lensa · pembuka: keping navy menyingkap entri jurnal
+                        yang sedang ditulis · penutup: logo terkunci + satu baris, loop lewat keping yang sama
+  Palet               : navy #051734 (logo) · off-white #F8F9FA (logo) · lime #99F808 (logo, aksen tunggal)
+                        turunan #030E22 (navy lebih dalam — kedalaman di balik keping)
+  Font                : Archivo Black (huruf tebal-lebar, sekeluarga rasa dengan huruf logo) / Archivo 500-700
+  Penekanan teks      : tanpa sorotan kata — penekanan dari ukuran, jeda, dan benda di sampingnya
+  Bahasa latar        : poster color-block (dua medan warna: off-white hangat lalu navy)
+  Tanda tangan gerak  : "keping ditempel" — tiap benda datang miring, overshoot, mendarat,
+                        bayangan navy-nya menyusul telat satu frame
+  Gerak latar (§7c)   : #12 medan warna bergantian, dipicu benda yang menutup lensa;
+                        di medan navy lapis kedua #6 keping raksasa berputar pelan, 2 lapis parallax
+  Permukaan latar(§7d): f — medan warna + grain + tint, dua lapis, tidak flat
+  Gaya render (§7e)   : flat solid dengan bayangan navy offset keras (logika ekstrusi logo), satu keluarga
+  Transisi            : dibawa benda (cap menghantam, lencana menutup lensa, keping navy menyapu) — tanpa cross-fade
+  Momen istimewa      : bekas tinta navy berbalik menghadap kamera dan mendapat warnanya
+  Komponen kanonik    : hanya satu — logo di tengah sebagai adegan terakhir
+
+  Tanpa suara (autoplay mute, loop). Kontrol tersembunyi: R ulang, Space jeda.
+  ?debug=1 panel scrub · ?clean=1 tahan autoplay (untuk snap/export).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+:root{
+  --navy:#051734; --deep:#030E22; --paper:#F8F9FA; --lime:#99F808;
+  --rule:rgba(5,23,52,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#03080f;overflow:hidden;
+  font-family:"Archivo",system-ui,sans-serif;color:var(--navy)}
+img{display:block;-webkit-user-drag:none}
+
+/* panggung dipatok 1920x1080, discale ke jendela — komposisi tidak berubah */
+#stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;
+  transform:translate(-50%,-50%) scale(1);overflow:hidden;background:var(--navy)}
+
+/* ---------- MEDAN WARNA (gerak latar §7c #12) ---------- */
+.field{position:absolute;inset:0}
+#fieldPaper{
+  background:
+    radial-gradient(60% 56% at 32% 26%,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 60%),
+    radial-gradient(56% 54% at 82% 88%,rgba(153,248,8,.26) 0%,rgba(153,248,8,0) 64%),
+    linear-gradient(162deg,#D9E1EE 0%,#C6D2E4 52%,#B4C4DC 100%)}
+#fieldNavy{visibility:hidden;opacity:0;
+  background:
+    radial-gradient(56% 54% at 50% 44%,rgba(24,68,132,.38) 0%,rgba(24,68,132,0) 68%),
+    linear-gradient(168deg,#0A2148 0%,var(--navy) 46%,var(--deep) 100%)}
+/* keping raksasa yang berputar pelan di medan navy — lapis kedua §7c #6 */
+.slab{position:absolute;left:50%;top:50%;border-radius:30px;pointer-events:none}
+#slabA{width:2280px;height:830px;margin:-415px 0 0 -1140px;background:rgba(153,248,8,.042)}
+#slabB{width:1900px;height:650px;margin:-325px 0 0 -950px;background:rgba(248,249,250,.062)}
+/* cahaya lembut yang bergeser di medan kertas */
+#glow{position:absolute;left:-400px;top:-480px;width:1560px;height:1560px;border-radius:50%;
+  background:radial-gradient(circle,rgba(153,248,8,.24) 0%,rgba(153,248,8,0) 64%)}
+
+/* ---------- RIG KAMERA ---------- */
+#shaker{position:absolute;inset:0;will-change:transform}
+#world{position:absolute;inset:0;will-change:transform}
+
+/* ---------- KEPING (satu keluarga render: flat solid + bayangan offset keras) ---------- */
+.plate{position:absolute;background:var(--paper);border:9px solid var(--navy);border-radius:16px}
+
+#card{left:378px;top:186px;width:1164px;height:700px;padding:52px 60px;
+  box-shadow:22px 22px 0 var(--navy)}
+#card .head{display:flex;align-items:center;gap:22px}
+#card .tag{width:46px;height:46px;background:var(--lime);border:6px solid var(--navy);border-radius:9px}
+#card .who{font-weight:600;font-size:36px;letter-spacing:.01em;color:rgba(5,23,52,.6)}
+#card .date{margin-left:auto;font-weight:600;font-size:32px;color:rgba(5,23,52,.4)}
+#card .rule{height:6px;background:var(--rule);border-radius:3px;margin:36px 0 42px}
+#entry{font-family:"Archivo Black",system-ui,sans-serif;font-size:74px;line-height:1.1;
+  letter-spacing:-.02em;max-width:900px;filter:url(#mbY)}
+#entry .wd{display:inline-block;opacity:0;will-change:transform,opacity}
+#card .bars{position:absolute;left:60px;right:60px;bottom:118px}
+#card .bars i{display:block;height:20px;border-radius:10px;background:var(--rule);margin-bottom:22px}
+#card .bars i:nth-child(2){width:72%}
+#card .bars i:nth-child(3){width:44%}
+/* baris apresiasi yang hidup di dalam dunia */
+#react{position:absolute;left:60px;bottom:42px;display:flex;align-items:center;gap:16px;opacity:0}
+#react .dot{width:34px;height:34px;border-radius:50%;background:var(--lime);border:5px solid var(--navy)}
+#react .n{font-weight:700;font-size:44px;font-variant-numeric:tabular-nums;min-width:78px}
+#react .l{font-weight:600;font-size:36px;color:rgba(5,23,52,.5)}
+
+/* kartu tetangga di feed */
+.feed{width:520px;height:352px;padding:34px 36px;opacity:0;box-shadow:16px 16px 0 var(--navy)}
+#feedL{left:-286px;top:408px}
+#feedR{left:1666px;top:348px}
+.feed .row{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.feed .av{width:46px;height:46px;border-radius:50%;background:var(--navy);flex:none}
+.feed .nm{width:190px;height:16px;border-radius:8px;background:var(--rule)}
+.feed .thumb{width:100%;height:122px;border-radius:10px;background:var(--lime);border:6px solid var(--navy)}
+.feed .bar{display:block;height:18px;border-radius:9px;background:var(--rule);margin-top:24px;width:62%}
+
+/* ---------- BEKAS TINTA & LENCANA ---------- */
+#mark,#badgeWrap{position:absolute;left:900px;top:560px;width:340px;opacity:0;
+  will-change:transform,opacity}
+#badgeWrap{height:281px}
+#badge,#bshadow{position:absolute;left:0;top:0;width:340px}
+#bshadow{opacity:0}
+#mark{filter:url(#rough)}
+#lshadow,#lock{position:absolute;left:580px;top:186px;width:760px;opacity:0}
+
+/* percikan tinta lime saat cap menghantam */
+.spit{position:absolute;border-radius:50%;background:var(--navy);
+  opacity:0;will-change:transform,opacity}
+
+/* ---------- CAP ---------- */
+#stamp{position:absolute;left:770px;top:294px;width:600px;opacity:0;will-change:transform,opacity}
+#stamp .grip{width:352px;height:118px;margin:0 auto;background:var(--navy);
+  border-radius:64px 64px 14px 14px}
+#stamp .neck{width:150px;height:38px;margin:0 auto;background:var(--navy)}
+#stamp .mount{width:430px;height:34px;margin:0 auto;background:var(--navy);border-radius:10px}
+#stamp .die{position:relative;width:600px;height:432px;background:var(--lime);
+  border:11px solid var(--navy);border-radius:20px;
+  display:flex;align-items:center;justify-content:center;box-shadow:18px 18px 0 var(--navy)}
+#stamp .die img{width:74%}
+
+/* ---------- PENUTUP ---------- */
+#tag{position:absolute;left:0;right:0;top:868px;text-align:center;opacity:0;
+  font-family:"Archivo Black",system-ui,sans-serif;font-size:56px;letter-spacing:-.015em;
+  color:var(--paper);filter:url(#mbX)}
+
+/* ---------- KEPING TRANSISI (membawa titik loop) ---------- */
+#wipe{position:absolute;left:50%;top:50%;width:3000px;height:1900px;margin:-950px 0 0 -1500px;
+  background:var(--deep);border-radius:40px;transform:translateX(-3400px) rotate(-7deg)}
+
+/* ---------- LAPISAN ATAS ---------- */
+#grain{position:absolute;inset:-90px;pointer-events:none;opacity:.2;
+  mix-blend-mode:overlay;filter:url(#grain-f);will-change:transform}
+#vig{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 74% at 50% 50%,transparent 44%,rgba(3,14,34,.4) 100%)}
+#filters{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
+
+/* ---------- PANEL DEV (hanya ?debug=1) ---------- */
+#ui{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:none;
+  align-items:center;gap:14px;padding:11px 18px;border-radius:16px;
+  background:rgba(5,23,52,.92);border:1px solid rgba(255,255,255,.12);
+  font-size:13px;color:#C7D0DE;z-index:50;font-family:ui-monospace,monospace}
+#ui.on{display:flex}
+#ui button{background:#12305C;color:#fff;border:none;padding:8px 16px;border-radius:9px;font:inherit;cursor:pointer}
+#scrub{width:360px;accent-color:var(--lime)}
+</style>
+</head>
+<body>
+
+<svg id="filters" aria-hidden="true">
+  <filter id="mbY" x="-40%" y="-160%" width="180%" height="420%"><feGaussianBlur id="mbYb" stdDeviation="0 0"/></filter>
+  <filter id="mbX" x="-160%" y="-40%" width="420%" height="180%"><feGaussianBlur id="mbXb" stdDeviation="0 0"/></filter>
+  <filter id="rough" x="-8%" y="-8%" width="116%" height="116%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="grain-f" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+</svg>
+
+<div id="stage">
+  <div class="field" id="fieldPaper"><div id="glow"></div></div>
+  <div class="field" id="fieldNavy">
+    <div class="slab" id="slabA"></div>
+    <div class="slab" id="slabB"></div>
+  </div>
+
+  <div id="shaker"><div id="world">
+
+    <div class="plate feed" id="feedL"><div class="row"><span class="av"></span><span class="nm"></span></div><div class="thumb"></div><span class="bar"></span></div>
+    <div class="plate feed" id="feedR"><div class="row"><span class="av"></span><span class="nm"></span></div><div class="thumb"></div><span class="bar"></span></div>
+
+    <div class="plate" id="card">
+      <div class="head">
+        <div class="tag"></div>
+        <div class="who">Skill Journal</div>
+        <div class="date">12 Mei</div>
+      </div>
+      <div class="rule"></div>
+      <div id="entry"></div>
+      <div class="bars"><i></i><i></i><i></i></div>
+      <div id="react"><div class="dot"></div><div class="n">0</div><div class="l">apresiasi</div></div>
+    </div>
+
+    <img id="mark" src="assets/logo-ink.png" alt="">
+    <div id="badgeWrap">
+      <img id="bshadow" src="assets/logo-solid.png" alt="">
+      <img id="badge" src="assets/logo.png" alt="">
+    </div>
+
+    <div id="stamp">
+      <div class="grip"></div>
+      <div class="neck"></div>
+      <div class="mount"></div>
+      <div class="die"><img src="assets/logo-ink.png" alt=""></div>
+    </div>
+
+    <img id="lshadow" src="assets/logo-lime.png" alt="">
+    <img id="lock" src="assets/logo.png" alt="DigiSkillBadge">
+    <div id="tag">portofolio digital anak SMK</div>
+
+  </div></div>
+
+  <div id="wipe"></div>
+  <div id="grain"></div>
+  <div id="vig"></div>
+</div>
+
+<div id="ui">
+  <button id="pp">jeda</button>
+  <input id="scrub" type="range" min="0" max="10" step="0.01" value="0">
+  <span id="clk">0.00</span>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), Q=new URLSearchParams(location.search);
+const W=1920,H=1080,DURATION=10;
+
+function fit(){const s=Math.min(innerWidth/W,innerHeight/H);
+  $('#stage').style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',fit); fit();
+
+/* ---------- entri jurnal dipecah per kata ---------- */
+$('#entry').innerHTML='Webinar: Dasar Jaringan Komputer'.split(' ')
+  .map(w=>`<span class="wd">${w}</span>`).join(' ');
+const WORDS=[...document.querySelectorAll('#entry .wd')];
+
+/* ---------- percikan tinta: deterministik (LCG berbenih, bukan Math.random) ---------- */
+let _s=20240512; const rnd=()=>((_s=(_s*1664525+1013904223)>>>0)/4294967296);
+const SPITS=[...Array(18)].map(()=>({
+  ang:rnd()*Math.PI*2, dist:150+rnd()*300, size:16+rnd()*46, rot:(rnd()*2-1)*140
+}));
+const spitEls=SPITS.map(p=>{
+  const e=document.createElement('div'); e.className='spit';
+  e.style.width=e.style.height=p.size+'px';
+  e.style.left=(1070-p.size/2)+'px'; e.style.top=(700-p.size/2)+'px';
+  $('#world').insertBefore(e,$('#stamp')); return e;
+});
+
+/* =======================  TIMELINE  ======================= */
+const tl=gsap.timeline({paused:true});
+const IMPACT=2.92;                 /* satu-satunya sumber getar kamera */
+
+/* keadaan awal ditulis di t=0 supaya loop benar-benar kembali */
+tl.set('#world',{x:103,y:189,scale:1.72,rotation:.6,transformOrigin:'50% 50%'},0)
+  .set('#card',{y:0,rotation:-2.1,scaleY:1,autoAlpha:1,transformOrigin:'50% 50%'},0)
+  .set(['#feedL','#feedR'],{opacity:0,y:150,rotation:0,autoAlpha:0},0)
+  .set('#feedL',{rotation:-3},0).set('#feedR',{rotation:2.6},0)
+  .set('#react',{opacity:0,y:18},0)
+  .set(WORDS,{opacity:0,y:36},0)
+  .set('#mbYb',{attr:{stdDeviation:'0 24'}},0)
+  .set('#mbXb',{attr:{stdDeviation:'28 0'}},0)
+  .set('#mark',{opacity:0,x:0,y:0,scale:1,scaleX:1,rotation:-2.5,transformOrigin:'50% 50%'},0)
+  .set('#badgeWrap',{opacity:0,x:0,y:0,scale:1,rotation:-2.5,transformOrigin:'50% 50%'},0)
+  .set('#badge',{scaleX:1,transformOrigin:'50% 50%'},0)
+  .set('#bshadow',{opacity:0,x:0,y:0},0)
+  .set('#stamp',{opacity:0,x:0,y:-1020,scale:1.45,rotation:-7,transformOrigin:'50% 26%'},0)
+  .set('#lock',{opacity:0,scale:1,rotation:0,x:0,y:0,transformOrigin:'50% 50%'},0)
+  .set('#lshadow',{opacity:0,x:40,y:40},0)
+  .set('#tag',{opacity:0,y:42},0)
+  .set('#fieldNavy',{autoAlpha:0},0)
+  .set('#fieldPaper',{autoAlpha:1},0)
+  .set(spitEls,{opacity:0,x:0,y:0,scale:.35},0)
+  .set('#glow',{x:0,y:0},0)
+  .set(['#slabA','#slabB'],{rotation:0},0)
+  .set('#wipe',{x:0,rotation:-7},0);
+
+/* keping transisi menyapu keluar — separuh kedua dari sapuan yang dimulai di detik 9,7 */
+tl.to('#wipe',{x:3400,duration:.44,ease:'power2.out'},0);
+
+/* ADEGAN 1 — kartu jurnal: entri ditulis kata demi kata, kamera turun pelan */
+tl.to(WORDS,{opacity:1,y:0,duration:.5,ease:'power3.out',stagger:.11},.22)
+  .to('#mbYb',{attr:{stdDeviation:'0 0'},duration:.85,ease:'power2.out'},.22)
+  .to('#world',{x:0,y:28,scale:1.42,duration:2.3,ease:'sine.inOut'},0)
+  .to('#glow',{x:240,y:180,duration:6.2,ease:'sine.inOut'},0);
+
+/* ADEGAN 2 — cap turun dan menghantam kartu */
+tl.set('#stamp',{opacity:1},2.26)
+  .to('#stamp',{y:0,scale:1,rotation:-3,duration:.64,ease:'power3.in'},2.28)
+  .to('#world',{x:-150,y:-200,scale:1.3,duration:.62,ease:'power2.out'},2.32)
+  /* hantaman: kartu tertekan, bekas tinta muncul seketika, percikan terlempar */
+  .to('#card',{scaleY:.97,duration:.06,ease:'power2.out'},IMPACT)
+  .to('#card',{scaleY:1,duration:.55,ease:'elastic.out(1,.42)'},IMPACT+.06)
+  .set('#mark',{opacity:1,scale:1.06},IMPACT)
+  .to('#mark',{scale:1,duration:.36,ease:'power3.out'},IMPACT)
+  .set(spitEls,{opacity:1},IMPACT)
+  .to(spitEls,{x:i=>Math.cos(SPITS[i].ang)*SPITS[i].dist,
+               y:i=>Math.sin(SPITS[i].ang)*SPITS[i].dist*.6,
+               rotation:i=>SPITS[i].rot,scale:1,duration:.72,ease:'power3.out'},IMPACT)
+  .to(spitEls,{opacity:0,duration:.44,ease:'power2.in'},IMPACT+.34)
+  /* cap terangkat dan keluar frame */
+  .to('#stamp',{y:-1040,scale:1.6,rotation:-11,duration:.56,ease:'power2.in'},IMPACT+.14)
+  .set('#stamp',{opacity:0},IMPACT+.68);
+
+/* ADEGAN 3 — bekas tinta terangkat lalu mendapat warnanya, kamera mundur ke feed */
+tl.to('#mark',{y:-112,scale:1.22,rotation:3.4,duration:.8,ease:'power2.out'},3.44)
+  .to('#card',{y:26,duration:.95,ease:'sine.out'},3.44)
+  /* momen istimewa: bekas berbalik menghadap kamera dan berubah jadi lencana berwarna */
+  .to('#mark',{scaleX:.02,duration:.18,ease:'power2.in'},4.18)
+  .set('#mark',{opacity:0},4.36)
+  .set('#badgeWrap',{opacity:1,y:-112,scale:1.22,rotation:3.4},4.36)
+  .set('#badge',{scaleX:.02},4.36)
+  .to('#badge',{scaleX:1,duration:.24,ease:'power2.out'},4.36)
+  .set('#bshadow',{opacity:.92,x:7,y:7},4.36)
+  .to('#bshadow',{x:28,y:28,duration:1.3,ease:'sine.out'},4.6)
+  .to('#badgeWrap',{y:-168,rotation:-2.4,duration:1.15,ease:'sine.inOut'},4.62)
+  .to('#world',{scale:.86,x:0,y:0,rotation:0,duration:1.4,ease:'power2.inOut'},4.32)
+  .to('#feedL',{autoAlpha:1,opacity:1,y:0,duration:.62,ease:'back.out(1.5)'},4.66)
+  .to('#feedR',{autoAlpha:1,opacity:1,y:0,duration:.62,ease:'back.out(1.5)'},4.82)
+  .to('#react',{opacity:1,y:0,duration:.42,ease:'power2.out'},4.96);
+
+/* angka apresiasi naik di dalam dunia */
+const CNT={v:0}, nEl=$('#react .n');
+tl.to(CNT,{v:47,duration:1.05,ease:'power2.out',
+  onUpdate:()=>{nEl.textContent=Math.round(CNT.v);}},4.98);
+
+/* ADEGAN 4 — lencana terbang menutup lensa, medan warna berganti di baliknya */
+tl.to('#badgeWrap',{x:-110,y:-160,scale:2.3,rotation:2,duration:.44,ease:'power2.in'},5.70)
+  .to('#bshadow',{opacity:0,duration:.14},6.10)
+  .to('#badgeWrap',{scale:11,rotation:7,duration:.34,ease:'power3.in'},6.14)
+  .to('#world',{scale:1,x:0,y:0,rotation:0,duration:.34,ease:'power2.inOut'},6.14)
+  .set('#fieldNavy',{autoAlpha:1},6.44)
+  .set('#fieldPaper',{autoAlpha:0},6.44)
+  .set(['#card','#feedL','#feedR'],{autoAlpha:0},6.44);
+
+/* ADEGAN 5 — logo mendarat sebagai stiker, bayangan navy menyusul telat */
+tl.set('#badgeWrap',{opacity:0},6.48)
+  .set('#lock',{opacity:1,scale:7.4,rotation:6,x:0,y:40},6.48)
+  .to('#lock',{scale:.968,rotation:-1.5,y:0,duration:.46,ease:'power4.out'},6.48)
+  .to('#lock',{scale:1,rotation:0,duration:.52,ease:'elastic.out(1,.55)'},6.94)
+  .set('#lshadow',{opacity:1,x:11,y:11},6.98)
+  .to('#lshadow',{x:40,y:40,duration:.3,ease:'back.out(2.4)'},7.0)
+  /* napas + keping raksasa berputar pelan di medan navy */
+  .to('#lock',{scale:1.022,duration:2.7,ease:'sine.inOut'},7.02)
+  .to('#lshadow',{x:47,y:47,duration:2.7,ease:'sine.inOut'},7.02)
+  .to('#world',{scale:1.06,duration:2.62,ease:'sine.inOut'},7.0)
+  .to('#slabA',{rotation:-9,duration:3.6,ease:'sine.inOut'},6.4)
+  .to('#slabB',{rotation:7,duration:3.6,ease:'sine.inOut'},6.4);
+
+/* ADEGAN 6 — satu baris penutup, lalu keping menyapu lensa menuju titik loop */
+tl.to('#tag',{opacity:1,y:0,duration:.44,ease:'power3.out'},8.5)
+  .to('#mbXb',{attr:{stdDeviation:'0 0'},duration:.52,ease:'power2.out'},8.5)
+  .fromTo('#wipe',{x:-3400},{x:0,duration:.42,ease:'power2.out'},9.58);
+
+tl.set({},{},DURATION);
+
+/* =======================  RENDER DETERMINISTIK  ======================= */
+/* semua yang berubah tiap frame adalah fungsi murni dari tl.time() */
+const shaker=$('#shaker'), grain=$('#grain');
+function render(t){
+  const d=t-IMPACT, env=d>=0?Math.exp(-d*8.5):0;
+  shaker.style.transform=
+    `translate(${Math.sin(t*118)*26*env}px,${Math.cos(t*97)*19*env}px) rotate(${Math.sin(t*141)*1.05*env}deg)`;
+  const st=Math.floor(t*12);                        /* butiran melompat 12x per detik */
+  grain.style.transform=`translate(${(st*37)%23-11}px,${(st*61)%29-14}px)`;
+}
+gsap.ticker.add(()=>render(tl.time()));
+
+/* =======================  PEMUTAR (tanpa panel di layar)  ======================= */
+const toggle=()=>tl.paused()?tl.play():tl.pause();
+addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();toggle();}
+  if(/^[rR]$/.test(e.key)){tl.pause(0);tl.play();}
+  if(/^[hH]$/.test(e.key))$('#ui').classList.toggle('on');
+});
+tl.eventCallback('onComplete',()=>{tl.play(0);});      /* loop */
+
+if(Q.has('debug')){
+  $('#ui').classList.add('on');
+  const sc=$('#scrub'),clk=$('#clk'),pp=$('#pp');
+  sc.max=DURATION;
+  pp.onclick=()=>{toggle();pp.textContent=tl.paused()?'main':'jeda';};
+  sc.oninput=()=>{tl.pause();tl.time(+sc.value);render(+sc.value);pp.textContent='main';};
+  gsap.ticker.add(()=>{const t=tl.time();clk.textContent=t.toFixed(2);sc.value=t;});
+}
+
+/* seek sinkron untuk snap.mjs / export: paksa GSAP menulis gaya sekarang */
+const seek=t=>{tl.pause();tl.time(t,false);if(gsap.ticker.tick)gsap.ticker.tick();render(t);};
+window.OPENER={tl,DURATION,W,H,seek,ready:false};
+
+document.fonts.ready.then(()=>{
+  window.OPENER.ready=true;
+  if(Q.has('t')){seek(parseFloat(Q.get('t')));return;}   /* bekukan di satu detik (potret/review) */
+  if(!Q.has('clean'))tl.play(0);
+});
+</script>
+</body>
+</html>
